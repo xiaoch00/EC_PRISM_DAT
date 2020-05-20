@@ -1,0 +1,2 @@
+"ID","Complete","Dropout","Dropout_reason","Outcome1_Pre","Outcome1_Post","ACE_Total_Score","Mod_1_Score","Child_age_months","Gender","Child_race","Caregiver_education","Caregiver_race","Caregiver_employment","annualIncome","timestamp"
+"1","TRUE","","","15","16","5","1","25","Female","Caucasian/White","Community College","Caucasian/White","Working full time","$30,000 to $44,999","1587723738"
