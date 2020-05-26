@@ -13,7 +13,7 @@
 library(shiny)
 library(shinyjs)
 library(ggplot2)
-library(googlesheets4)
+library(googlesheets)
 library(DT)
 library(dplyr)
 library(shinydashboard)
@@ -44,12 +44,14 @@ fieldsAll <- c("ID", "Complete", "Dropout","Dropout_reason","Outcome1_Pre", "Out
                "Gender","Child_race","Caregiver_education", "Caregiver_race", "Caregiver_employment", "annualIncome")
 
 
+#loaddata from Googlesheet
 loadData <- function () {
-  data <- read.csv(
-    url("https://docs.google.com/spreadsheets/d/e/2PACX-1vTCncbzNfJinl-4NzOwD6MiYrp238BEZqbLcXhnI-js5tbu2-v8-7XArXqL3pzhRyE-sprkdjdIJAnJ/pub?gid=0&single=true&output=csv"),
+  data <- read.csv(url("https://docs.google.com/spreadsheets/d/e/2PACX-1vTCncbzNfJinl-4NzOwD6MiYrp238BEZqbLcXhnI-js5tbu2-v8-7XArXqL3pzhRyE-sprkdjdIJAnJ/pub?gid=0&single=true&output=csv"),
     strip.white = TRUE
   )
   data
+  
+#  data <- sheets_speedread("1J-Z5GJIz1rh1P3XSQZywXqZJ_bOVvhc7kFwGPDhKmoo", sheet = "Test")
   
 }
 
@@ -58,7 +60,7 @@ newData <- loadData()
 ui <- fluidPage(theme = shinytheme("cerulean"),
                   
                   titlePanel("UO Suggested Analyses IMPACT Evaluation Tool"),
-                  navbarPage("Get started",
+                  navbarPage("Menu",
                              tabPanel(icon("home"),
                                       
                                       fluidRow(column(tags$img(src="Antioquia.png",width="200px",height="260px"),width=4),
@@ -162,102 +164,60 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                              ),
                              
                              tabPanel("Data Presentation",
+                                      #         htmlOutput("googleSheet")
                                       
-                                      fluidRow(column(width=2),
-                                               column(
-                                                 h4(p("Normality",style="color:black;text-align:center")),
-                                                 width=8,style="background-color:lavender;border-radius: 10px")
-                                      ),
-                                      br(),
-                                      fluidRow(column(width=2, icon("hand-point-right","fa-5x"),align="center"),
-                                               column(
-                                                 p("In order to make inferences about the results of this modeling process, it is necessary to establish 
-                                     distributional assumptions, and to make things easier we are going to assume that the response (dependent) 
-                                     variable is normally distributed; following this assumption, we will try to achieve this:",style="color:black;text-align:justify"),
-                                                 withMathJax(),
-                                                 p('$$H_0:~Y ~ \\sim ~ Normal( ~\\mu ~,~ \\sigma~ )$$',style="color:black;border:1px solid black;background-color:white"),
-                                                 p("In our case we will take as a response variable", strong(em("Personal injuries")), "since it represents a big 
-                                    safety problem where the physical integrity of the people is threatened. We will try to explain this 
-                                    variable through education issues, others related to sports and even through other safety problems. All of these,
-                                    represented through the other variables in the dataset",style="color:black;text-align:justify"),
-                                                 width=8,style="background-color:lavender;border-radius: 10px")
-                                      ),
-                                      br(),
-                                      fluidRow(column(width=2),
-                                               column(
-                                                 p("Let's do it. You are going to find some graphical and analytical tests in order to conclude about the previous hypothesis",style="color:black;text-align:center"),
-                                                 width=8,style="background-color:papayawhip;border-radius: 10px")
-                                      ),
-                                      hr(),
-                                      tags$style(".fa-chart-pie {color:#E87722}"),
-                                      h3(p(em("Graphical tests "),icon("chart-pie",lib = "font-awesome"),style="color:black;text-align:center")),
-                                      tags$style(HTML(".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: coral; border-top: 1px coral; border-bottom: 1px coral;border-left: 1px coral}")),
-                                      tags$style(HTML(".js-irs-0 .irs-max, .js-irs-0 .irs-min {background:papayawhip}")),
+                                      h1("Participant Tracking Graphs", align="center",
+                                         style ="font-family: 'arial'; font-size: 16pt; color:blue "),
+                                      h2("Did participants complete program?  &  Reasons for Opt-Out and Drop-Out", align="center",
+                                         style ="font-family: 'arial'; font-size: 12pt; color:blue "),
                                       
-                                      br(),
-                                      sidebarLayout(
-                                        sidebarPanel(
-                                          
-                                          sliderInput("Transformacion",p("Try power transformations to achieve the normality of",em("Personal injuries"),style="color:black;text-align:center"),
-                                                      value=1,
-                                                      min=-3,
-                                                      max=3,
-                                                      step=0.01),
-                                          br(),
-                                          
-                                          p("Remember we are looking for this (click on the next image to view it in a new tab)",style="color:black;text-align:center"),
-                                          br(),
-                                          a(href="https://drive.google.com/file/d/1eXf5FHKwMIt5aW--64eaB0_UArB_N-v4/view?usp=sharing", tags$img(src="collage.png",width="380px",height="130px",style="border:1px solid black"),
-                                            target="_blank"),
-                                          br(),
-                                          br(),
-                                          tags$style(".fa-wikipedia-w {color:black}"),
-                                          p("Read more about normal distribution here → ", a(href="https://en.wikipedia.org/wiki/Normal_distribution", icon("wikipedia-w"),target="_blank"),style="color:black;text-align:center")
-                                          
-                                          
-                                          
-                                        ),
-                                        mainPanel(
-                                          
-                                          fluidRow(
-                                            column(br(),plotOutput("Histograma"),br(),width=4,style="border:1px solid black"),
-                                            column(br(),plotOutput("Boxplot"),br(),width=4,style="border: 1px solid black;border-left: none"),
-                                            column(br(),plotOutput("qqPlot"),br(),width=4,style="border:1px solid black;border-left:none")
-                                            
-                                          )
-                                        )),
-                                      hr(),
-                                      tags$style(".glyphicon-folder-open {color:#E87722}"),
-                                      h3(p(em("Analytical tests  "),icon("folder-open",lib = "glyphicon"),style="color:black;text-align:center")),
-                                      br(),
-                                      sidebarLayout(
-                                        
-                                        sidebarPanel(
-                                          
-                                          selectInput("PruebaAnalitica",p("Please select the test you want to try:",style="color:black; text-align:center"),choices=c("Shapiro-Wilk"=1,"Anderson-Darling"=2,"Cramér-von Mises"=3,"Kolmogorov-Smirnov"=4,"Jarque-Bera"=5)),
-                                          uiOutput("ReadMore")
-                                        ),
-                                        mainPanel(
-                                          
-                                          fluidRow(
-                                            
-                                            tags$head(tags$style("#Conclusion1{color: navy;
-                                                      font-size: 15px;
-                                                             font-style: italic;
-                                                             font-weight: bold;
-                                                             text-align: center
-                                                             }")),
-                                            tags$head(tags$style("#Prueba{height: 155px; border: 1px solid black; background-color: lavender}")),
-                                            column(verbatimTextOutput("Prueba"),
-                                                   br(),width = 6),
-                                            column(br(),
-                                                   p("Remember we are looking for a p-value greater than 0.05 (for a confidence level of 95%), so:",style="color:black"),
-                                                   br(),
-                                                   textOutput("Conclusion1"),
-                                                   br(),width = 6,style="background-color:lavender;border-left:8px solid blue")
-                                            
-                                          )
-                                        ))
+                                      fluidRow(  
+                                        splitLayout(cellWidths = c("50%", "50%"),plotOutput("pie_completedintervention"),plotOutput("OutReason"))
+                                      ),
+                                      
+                                      h1("Child Characteristics", align="center",
+                                         style ="font-family: 'arial'; font-size: 16pt; color:blue "),
+                                      h2("Child Race  &  Child Gender", align="center",
+                                         style ="font-family: 'arial'; font-size: 12pt; color:blue "),
+                                      
+                                      fluidRow(  
+                                        splitLayout(cellWidths = c("50%", "50%"),plotOutput("pie_childRace"),plotOutput("pie_childGender"))
+                                      ),  
+                                      h1("Caregiver and Household Characteristics", align="center",
+                                         style ="font-family: 'arial'; font-size: 16pt; color:blue "),
+                                      h2("Caregiver Race  & Caregiver Education Level", align="center",
+                                         style ="font-family: 'arial'; font-size: 12pt; color:blue "),
+                                      
+                                      #   fluidRow(
+                                      #   column(3,
+                                      #          tableOutput(s_table)
+                                      #        )
+                                      # ),
+                                      
+                                      fluidRow(  
+                                        splitLayout(cellWidths = c("50%", "50%"),plotOutput("pie_cgRace"),plotOutput("pie_cgEd"))
+                                      ),  
+                                      #  fluidRow(  
+                                      #       splitLayout(cellWidths = c("50%", "50%"),plotOutput("pie_cgEmployment"),plotOutput("pie_income"))
+                                      # ),  
+                                      h1("Evaluating Changes in Targets and Outcomes", align="center",
+                                         style ="font-family: 'arial'; font-size: 16pt; color:blue "),
+                                      h2("Individual Change in Outcome1  &  Average Change in Outcome1", align="center",
+                                         style ="font-family: 'arial'; font-size: 12pt; color:blue "),
+                                      
+                                    #  selectInput("OutcomeSelection", "Please select outcome:",
+                                     #             c("Outcome 1",  "Outcome 2", "Outcome 3")),
+                                      fluidRow(  
+                                        splitLayout(cellWidths = c("50%", "50%"),plotOutput("outcome1_indv"),plotOutput("outcome1_avr"))
+                                      ),  
+                                      
+                                      h2("Change in Outomce1 by ACEs Score  &  Change in Outcome1 by Moderator1", align="center",
+                                         style ="font-family: 'arial'; font-size: 12pt; color:blue "),
+                                      
+                                      fluidRow(  
+                                        splitLayout(cellWidths = c("50%", "50%"),plotOutput("outcome1byACEs"),plotOutput("outcome1byMod1"))
+                                      ),  
+                                      
                              )
                              
                   )
@@ -283,6 +243,207 @@ server <- function(input, output, session) {
   rownames = FALSE,
   colnames = c("ID",	"Complete",	"Dropout",	"Dropout_reason",	"Outcome1_Pre",	"Outcome1_Post",	"ACE_Total_Score",	"Mod_1_Score",	"Child_age_months",	"Gender",	"Child_race",	"Caregiver_education",	"Caregiver_race",	"Caregiver_employment",	"annualIncome")
   ) 
+  
+  
+  
+  # Enable the submit button when all mandatory fields are completed
+  observe({
+    
+    # check if all mandatory fields have a value
+    mandatoryFilled <-
+      vapply(fieldsMandatory,
+             function(x) {
+               !is.null(input[[x]]) && input[[x]] != ""
+             },
+             logical(1))
+    
+    mandatoryFilled <- all(mandatoryFilled)
+    
+    # enable/disable the submit button
+    shinyjs::toggleState(id = "submit", condition = mandatoryFilled)
+  })
+  
+  # Gather all the form inputs
+  formData <- reactive({
+    data <- sapply(fieldsAll, function(x) input[[x]])
+  })
+  
+  
+  # Save data to Googlesheet
+  saveData <- function(data) {
+#    sheets_append(data, "1J-Z5GJIz1rh1P3XSQZywXqZJ_bOVvhc7kFwGPDhKmoo", sheet = "Test")
+    gs_add_row(ss = gs_key("1J-Z5GJIz1rh1P3XSQZywXqZJ_bOVvhc7kFwGPDhKmoo"), 
+               ws = "Test",
+               input = data
+    )
+  }
+  
+  
+  
+
+  
+  
+  
+  observeEvent(input$submit, {
+    shinyjs::disable("submit")
+    shinyjs::show("submit_msg")
+    shinyjs::hide("error")
+    
+    
+    tryCatch({
+      saveData(formData())
+      shinyjs::reset("form")
+      shinyjs::hide("form")
+      shinyjs::show("thankyou_msg")
+    },
+    error = function(err) {
+      shinyjs::html("error_msg", err$message)
+      shinyjs::show(id = "error", anim = TRUE, animType = "fade")
+    },
+    finally = {
+      shinyjs::enable("submit")
+      shinyjs::hide("submit_msg")
+      
+    })
+  })
+  
+  observeEvent(input$submit_another, {
+    shinyjs::show("form")
+    shinyjs::hide("thankyou_msg")
+    #  update table?
+  })  
+  
+  
+  output$pie_completedintervention <- renderPlot({
+    D2 <- newData %>% 
+      group_by(Complete) %>%
+      summarise(n())
+    D2$lbs <- NA
+    D2$lbs <- ifelse(D2$Complete, "YES", "NO")
+    pct <- round(D2$`n()`/sum(D2$`n()`)*100)
+    lbls <- paste(D2$lbs, pct, "%")
+    pie(D2$`n()`, labels = lbls)
+    
+  })
+  
+  output$OutReason <- renderPlot({
+    D3 <- newData %>% 
+      filter(Dropout != "") 
+    
+    ggplot(D3, aes(Dropout_reason)) + 
+      geom_bar(alpha = 0.7, fill = "#FF6666", width = 0.3) + theme(aspect.ratio = 2/1, axis.title.x = element_blank(), axis.title.y  = element_blank()) + coord_flip() 
+  })
+  
+  output$pie_childRace <- renderPlot({
+    D4 <- newData %>% 
+      group_by(Child_race) %>%
+      summarise(n())
+    pct4 <- round(D4$`n()`/sum(D4$`n()`)*100)
+    lbls4 <- paste(D4$Child_race, pct4, "%")
+    pie(D4$`n()`, labels = lbls4, main = "Child Race")
+    
+  })
+  
+  output$pie_childGender <- renderPlot({
+    D5 <- newData %>% 
+      group_by(Gender) %>%
+      summarise(n())
+    pct5 <- round(D5$`n()`/sum(D5$`n()`)*100)
+    lbls5 <- paste(D5$Gender, pct5, "%")
+    pie(D5$`n()`, labels = lbls5, main = "Child Gender")     
+  })
+  
+  output$pie_cgRace <- renderPlot({
+    D6 <- newData %>% 
+      group_by(Caregiver_race) %>%
+      summarise(n())
+    ggplot(D6, aes(x="", y=`n()`, fill = factor(Caregiver_race)))+ geom_bar(width = 1, stat = "identity") + 
+      geom_text(aes(label = paste(round(`n()`/sum(`n()`)*100,1),"%")), position = position_stack(vjust = 0.5)) +
+      theme_classic()+
+      theme(plot.title = element_text(hjust = 0.5),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank())+
+      labs(fill = "Category", x = NULL, y=NULL) + coord_polar("y")
+    
+  })
+  
+  output$pie_cgEd <- renderPlot({
+    D7 <- newData %>% 
+      group_by(Caregiver_education) %>%
+      summarise(n())
+    ggplot(D7, aes(x="", y=`n()`, fill = factor(Caregiver_education)))+ geom_bar(width = 1, stat = "identity") + 
+      geom_text(aes(label = paste(round(`n()`/sum(`n()`)*100,1),"%")), position = position_stack(vjust = 0.5)) +
+      theme_classic()+
+      theme(plot.title = element_text(hjust = 0.5),
+            axis.line = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank())+
+      labs(fill = "Category", x = NULL, y=NULL) + coord_polar("y")
+    
+  })
+  output$outcome1_indv <- renderPlot({
+    D8 <- newData %>% 
+      filter(Complete) 
+    ggplot(D8) + geom_segment( aes(x=1, xend = 2,  y=Outcome1_Pre, yend = Outcome1_Post, color = as.character(ID))) +
+      theme_bw()+
+      scale_x_discrete(
+        breaks = c("1", "2"),
+        labels = c("Pre", "Post"),
+        limits = c(1,2)
+      ) + labs(y = "Outcome1")
+    
+    
+  })
+  output$outcome1_avr <- renderPlot({
+    D9 <- newData %>% 
+      filter(Complete) %>%
+      summarise(meanOut1pre = mean(Outcome1_Pre), meanOut1post = mean(Outcome1_Post))
+    ggplot(D9) + geom_segment( aes(x=1, xend = 2,  y=meanOut1pre, yend = meanOut1post, color = "FF6666")) +
+      theme_bw()+
+      scale_x_discrete(
+        breaks = c("1", "2"),
+        labels = c("Pre", "Post"),
+        limits = c(1,2)
+      ) + labs(y = "Outcome1")
+  })
+  
+  output$outcome1byACEs <- renderPlot({
+    D10_1 <- newData %>% 
+      filter(Complete) %>%
+      filter(ACE_Total_Score > mean(ACE_Total_Score)) %>%
+      summarise(meanOut1prebyACE = mean(Outcome1_Pre), meanOut1postbyACE = mean(Outcome1_Post))
+    D10_2 <- newData %>% 
+      filter(Complete) %>%
+      filter(ACE_Total_Score <= mean(ACE_Total_Score)) %>%
+      summarise(meanOut1prebyACE = mean(Outcome1_Pre), meanOut1postbyACE = mean(Outcome1_Post))
+    
+    D10 <- rbind(D10_2, D10_1)
+    D10$ACEs <- c("Above Average", "Below Average")
+    ggplot(D10) + geom_segment( aes(x=1, xend = 2,  y=meanOut1prebyACE, yend = meanOut1postbyACE, color = ACEs)) +
+      theme_bw()+
+      scale_x_discrete(
+        breaks = c("1", "2"),
+        labels = c("Pre Average", "Post Average"),
+        limits = c(1,2)
+      ) + labs(y = "Outcome1")
+    
+  })
+  output$outcome1byMod1 <- renderPlot({
+    D11 <- newData %>% 
+      filter(Complete) %>%
+      group_by(Mod_1_Score) %>%
+      summarise(meanOut1prebyMod1 = mean(Outcome1_Pre), meanOut1postbyMod1 = mean(Outcome1_Post))
+    ggplot(D11) + geom_segment( aes(x=1, xend = 2,  y=meanOut1prebyMod1, yend = meanOut1postbyMod1, color = as.character( Mod_1_Score))) +
+      theme_bw()+
+      scale_x_discrete(
+        breaks = c("1", "2"),
+        labels = c("Pre Average", "Post Average"),
+        limits = c(1,2)
+      ) + labs(y = "Outcome1")
+  })
+  
+
   
 }      
 
